@@ -240,17 +240,14 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	return app
 }
 
-// application updates every begin block
 func (app *GaiaApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 	return app.mm.BeginBlock(ctx, req)
 }
 
-// application updates every end block
 func (app *GaiaApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
 	return app.mm.EndBlock(ctx, req)
 }
 
-// application update at chain initialization
 func (app *GaiaApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState simapp.GenesisState
 	app.cdc.MustUnmarshalJSON(req.AppStateBytes, &genesisState)
@@ -258,12 +255,10 @@ func (app *GaiaApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci
 	return app.mm.InitGenesis(ctx, genesisState)
 }
 
-// load a particular height
 func (app *GaiaApp) LoadHeight(height int64) error {
 	return app.LoadVersion(height, app.keys[bam.MainStoreKey])
 }
 
-// ModuleAccountAddrs returns all the app's module account addresses.
 func (app *GaiaApp) ModuleAccountAddrs() map[string]bool {
 	modAccAddrs := make(map[string]bool)
 	for acc := range maccPerms {
@@ -273,16 +268,6 @@ func (app *GaiaApp) ModuleAccountAddrs() map[string]bool {
 	return modAccAddrs
 }
 
-// Codec returns the application's sealed codec.
 func (app *GaiaApp) Codec() *codec.Codec {
 	return app.cdc
-}
-
-// GetMaccPerms returns a mapping of the application's module account permissions.
-func GetMaccPerms() map[string][]string {
-	modAccPerms := make(map[string][]string)
-	for k, v := range maccPerms {
-		modAccPerms[k] = v
-	}
-	return modAccPerms
 }
