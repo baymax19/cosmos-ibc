@@ -16,7 +16,8 @@ type PacketMsgUser struct {
 }
 
 func (p PacketMsgUser) Marshal() []byte {
-
+	cdc := codec.New()
+	RegisterCodec(cdc)
 	return cdc.MustMarshalBinaryBare(p)
 }
 
@@ -41,10 +42,11 @@ func (p PacketMsgUser) Timeout() uint64 {
 }
 
 func (p PacketMsgUser) MarshalJSON() ([]byte, error) {
-	bz, err := json.Marshal(p)
+	bz, err := json.Marshal(p.Name)
 	if err != nil {
 		return nil, err
 	}
+
 	return bz, nil
 }
 
@@ -81,7 +83,18 @@ func (p PacketTokenTransfer) Marshal() []byte {
 }
 
 func (p PacketTokenTransfer) MarshalJSON() ([]byte, error) {
-	bz, err := json.Marshal(p)
+
+	var a = struct {
+		Sender   sdk.AccAddress
+		Receiver sdk.AccAddress
+		Amount   sdk.Coins
+	}{
+		Sender:   p.Sender,
+		Receiver: p.Receiver,
+		Amount:   p.Amount,
+	}
+
+	bz, err := json.Marshal(a)
 	if err != nil {
 		return nil, err
 	}
