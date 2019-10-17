@@ -45,17 +45,17 @@ type MsgTokenTransfer struct {
 	ChannelID string
 	Signer    sdk.AccAddress
 	ToAddress sdk.AccAddress
-	Coins     sdk.Coins
+	Amount    sdk.Coins
 }
 
 var _ sdk.Msg = MsgTokenTransfer{}
 
-func NewMsgTokenTransfer(name, chanID string, from, to sdk.AccAddress, coins sdk.Coins) MsgTokenTransfer {
+func NewMsgTokenTransfer(chanID string, from, to sdk.AccAddress, coins sdk.Coins) MsgTokenTransfer {
 	return MsgTokenTransfer{
 		ChannelID: chanID,
 		Signer:    from,
 		ToAddress: to,
-		Coins:     coins,
+		Amount:    coins,
 	}
 }
 
@@ -70,7 +70,7 @@ func (MsgTokenTransfer) Route() string {
 }
 
 func (MsgTokenTransfer) Type() string {
-	return "user"
+	return "transfer"
 }
 
 func (msg MsgTokenTransfer) GetSigners() []sdk.AccAddress {

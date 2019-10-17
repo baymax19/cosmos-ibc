@@ -10,16 +10,18 @@ import (
 )
 
 type Keeper struct {
-	cdc  *codec.Codec
-	key  sdk.StoreKey
-	port ibc.Port
+	cdc        *codec.Codec
+	key        sdk.StoreKey
+	bankKeeper types.BankKeeper
+	port       ibc.Port
 }
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, port ibc.Port) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk types.BankKeeper, port ibc.Port) Keeper {
 	return Keeper{
-		cdc:  cdc,
-		key:  key,
-		port: port,
+		cdc:        cdc,
+		key:        key,
+		bankKeeper: bk,
+		port:       port,
 	}
 }
 
@@ -44,12 +46,20 @@ func (k Keeper) SetUser(ctx sdk.Context, chainID, name string) {
 func (k Keeper) UpdateUser(ctx sdk.Context, chaiID, name string) sdk.Error {
 	id, err := k.GetUser(ctx, chaiID)
 
-	fmt.Println("Equal fold Data", name, id)
 	if strings.EqualFold(id, name) {
 
 		return sdk.NewError("ibcsend", 1919, fmt.Sprintf("data already exist %s", err))
 	}
 
 	k.SetUser(ctx, chaiID, name)
+	return nil
+}
+
+func (k Keeper) ReceiveTokens(ctx sdk.Context, receiver sdk.AccAddress, amount sdk.Coins) sdk.Error {
+	_, err := k.bankKeeper.AddCoins(ctx, receiver, amount)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

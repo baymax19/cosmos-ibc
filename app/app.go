@@ -162,8 +162,8 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	app.ibcKeeper = ibc.NewKeeper(app.cdc, keys[ibc.StoreKey])
 
 	// IBC Transfer modules
-	app.ibcSendKeeper = ibcsend.NewKeeper(app.cdc, keys[ibcsend.ModuleName], app.ibcKeeper.Port(ibcsend.ModuleName))
-	app.ibcRecvKeeper = ibcrecv.NewKeeper(app.cdc, keys[ibcrecv.ModuleName], app.ibcKeeper.Port(ibcrecv.ModuleName))
+	app.ibcSendKeeper = ibcsend.NewKeeper(app.cdc, keys[ibcsend.ModuleName], app.bankKeeper, app.ibcKeeper.Port(ibcsend.ModuleName))
+	app.ibcRecvKeeper = ibcrecv.NewKeeper(app.cdc, keys[ibcrecv.ModuleName], app.bankKeeper, app.ibcKeeper.Port(ibcrecv.ModuleName))
 
 	// register the proposal types
 	govRouter := gov.NewRouter()

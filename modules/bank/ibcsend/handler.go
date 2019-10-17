@@ -10,6 +10,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case types.MsgUser:
 			return handleMsgUser(ctx, k, msg)
+		case types.MsgTokenTransfer:
+			return handleTokenTransfer(ctx, k, msg)
 		default:
 			return sdk.ErrUnknownRequest("1919").Result()
 		}
@@ -18,6 +20,15 @@ func NewHandler(k Keeper) sdk.Handler {
 
 func handleMsgUser(ctx sdk.Context, k Keeper, msg types.MsgUser) ( sdk.Result) {
 	err := k.UpdateUser(ctx, msg.ChannelID, msg.Name)
+	if err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{}
+}
+
+func handleTokenTransfer(ctx sdk.Context, k Keeper, msg types.MsgTokenTransfer) sdk.Result {
+	err := k.TransferTokens(ctx, msg.Signer, msg.ToAddress, msg.Amount, msg.ChannelID)
 	if err != nil {
 		return err.Result()
 	}

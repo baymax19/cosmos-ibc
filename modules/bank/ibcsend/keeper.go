@@ -10,16 +10,18 @@ import (
 )
 
 type Keeper struct {
-	cdc  *codec.Codec
-	key  sdk.StoreKey
-	port ibc.Port
+	cdc        *codec.Codec
+	key        sdk.StoreKey
+	bankKeeper types.BankKeeper
+	port       ibc.Port
 }
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, port ibc.Port) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk types.BankKeeper, port ibc.Port) Keeper {
 	return Keeper{
-		cdc:  cdc,
-		key:  key,
-		port: port,
+		cdc:        cdc,
+		key:        key,
+		bankKeeper: bk,
+		port:       port,
 	}
 }
 
@@ -50,6 +52,20 @@ func (k Keeper) UpdateUser(ctx sdk.Context, chanID, name string) sdk.Error {
 	k.SetUser(ctx, chanID, name)
 	packet := types.PacketMsgUser{Name: name}
 
-	fmt.Println("Packet++++++++++++++++++++++++++", chanID, packet)
+	return k.port.Send(ctx, chanID, packet)
+}
+
+func (k Keeper) TransferTokens(ctx sdk.Context, from, to sdk.AccAddress, amount sdk.Coins, chanID string) sdk.Error {
+	_, err := k.bankKeeper.SubtractCoins(ctx, from, amount)
+	if err != nil {
+		return err
+	}
+
+	packet := types.PacketTokenTransfer{
+		Sender:   from,
+		Receiver: to,
+		Amount:   amount,
+	}
+
 	return k.port.Send(ctx, chanID, packet)
 }

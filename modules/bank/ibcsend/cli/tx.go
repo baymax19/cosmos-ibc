@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"fmt"
 	"github.com/baymax19/cosmos-ibc/modules/bank/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -22,6 +21,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 
 	txCmd.AddCommand(
 		UpdateUserTxCmd(cdc),
+		TokenTransferCmd(cdc),
 	)
 
 	return txCmd
@@ -35,17 +35,38 @@ func UpdateUserTxCmd(cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			ctx := context.NewCLIContext().WithCodec(cdc).WithBroadcastMode(flags.BroadcastBlock)
-			add, name, err := client.GetFromFields(ctx.GetFromName(), false)
+
+			msg := types.NewMsgUser(args[1], args[0], ctx.GetFromAddress())
+
+			return utils.GenerateOrBroadcastMsgs(ctx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	cmd = client.PostCommands(cmd)[0]
+
+	return cmd
+}
+
+func TokenTransferCmd(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer [to-address] [amount] [channel-id]",
+		Short: "IBC token transfer",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			ctx := context.NewCLIContext().WithCodec(cdc).WithBroadcastMode(flags.BroadcastBlock)
+
+			to, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
 				return err
 			}
 
-			ctx = ctx.WithFromAddress(add)
-			ctx = ctx.WithFromName(name)
-			fmt.Println("============================", ctx)
+			amount, err := sdk.ParseCoins(args[1])
+			if err != nil {
+				return err
+			}
 
-			fmt.Println(add, name)
-			msg := types.NewMsgUser(args[1], args[0], add)
+			msg := types.NewMsgTokenTransfer(args[2], ctx.GetFromAddress(), to, amount)
 
 			return utils.GenerateOrBroadcastMsgs(ctx, txBldr, []sdk.Msg{msg})
 		},
