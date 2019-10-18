@@ -228,6 +228,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.supplyKeeper, auth.DefaultSigVerificationGasConsumer))
+	app.SetAnteHandler(ibc.NewAnteHandler(app.ibcKeeper.Channel()))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
