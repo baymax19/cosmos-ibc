@@ -18,3 +18,10 @@ func RegisterRecv(cdc *codec.Codec) {
 	cdc.RegisterConcrete(PacketMsgUser{}, "ibcrecv/packet-user", nil)
 	cdc.RegisterConcrete(PacketTokenTransfer{}, "ibcrecv/packet-token-transfer", nil)
 }
+
+var ModuleCdc *codec.Codec
+
+func init() {
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+}

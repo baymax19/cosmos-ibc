@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -36,7 +36,7 @@ func UpdateUserTxCmd(cdc *codec.Codec) *cobra.Command {
 			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			ctx := context.NewCLIContext().WithCodec(cdc).WithBroadcastMode(flags.BroadcastBlock)
 
-			msg := types.NewMsgUser(args[1], args[0], ctx.GetFromAddress())
+			msg := types2.NewMsgUser(args[1], args[0], ctx.GetFromAddress())
 
 			return utils.GenerateOrBroadcastMsgs(ctx, txBldr, []sdk.Msg{msg})
 		},
@@ -66,7 +66,7 @@ func TokenTransferCmd(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgTokenTransfer(args[2], ctx.GetFromAddress(), to, amount)
+			msg := types2.NewMsgTokenTransfer(args[2], ctx.GetFromAddress(), to, amount)
 
 			return utils.GenerateOrBroadcastMsgs(ctx, txBldr, []sdk.Msg{msg})
 		},

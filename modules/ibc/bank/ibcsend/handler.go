@@ -1,7 +1,7 @@
 package ibcsend
 
 import (
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -10,9 +10,9 @@ func NewHandler(k Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case types.MsgUser:
+		case types2.MsgUser:
 			return handleMsgUser(ctx, k, msg)
-		case types.MsgTokenTransfer:
+		case types2.MsgTokenTransfer:
 			return handleTokenTransfer(ctx, k, msg)
 		default:
 			return sdk.ErrUnknownRequest("1919").Result()
@@ -20,7 +20,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleMsgUser(ctx sdk.Context, k Keeper, msg types.MsgUser) ( sdk.Result) {
+func handleMsgUser(ctx sdk.Context, k Keeper, msg types2.MsgUser) ( sdk.Result) {
 	err := k.UpdateUser(ctx, msg.ChannelID, msg.Name)
 	if err != nil {
 		return err.Result()
@@ -29,7 +29,7 @@ func handleMsgUser(ctx sdk.Context, k Keeper, msg types.MsgUser) ( sdk.Result) {
 	return sdk.Result{}
 }
 
-func handleTokenTransfer(ctx sdk.Context, k Keeper, msg types.MsgTokenTransfer) sdk.Result {
+func handleTokenTransfer(ctx sdk.Context, k Keeper, msg types2.MsgTokenTransfer) sdk.Result {
 	err := k.TransferTokens(ctx, msg.Signer, msg.ToAddress, msg.Amount, msg.ChannelID)
 	if err != nil {
 		return err.Result()

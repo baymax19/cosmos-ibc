@@ -1,9 +1,9 @@
-package ibcrecv
+package ibcsend
 
 import (
 	"encoding/json"
-	"github.com/baymax19/cosmos-ibc/modules/bank/ibcrecv/cli"
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	cli2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/ibcsend/cli"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -15,7 +15,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-const ModuleName = "receive"
+const ModuleName = "send"
 
 var (
 	_ module.AppModule      = AppModule{}
@@ -29,7 +29,7 @@ func (a AppModuleBasic) Name() string {
 }
 
 func (a AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
-	types.RegisterRecv(cdc)
+	types2.RegisterSend(cdc)
 }
 
 func (a AppModuleBasic) DefaultGenesis() json.RawMessage {
@@ -44,12 +44,12 @@ func (a AppModuleBasic) RegisterRESTRoutes(context.CLIContext, *mux.Router) {
 
 }
 
-func (a AppModuleBasic) GetTxCmd(*codec.Codec) *cobra.Command {
-	return nil
+func (a AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
+	return cli2.GetTxCmd(cdc)
 }
 
 func (a AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return cli.GetQueryCmd(ModuleName, cdc)
+	return cli2.GetQueryCmd(ModuleName, cdc)
 }
 
 type AppModule struct {

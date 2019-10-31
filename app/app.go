@@ -4,6 +4,9 @@ import (
 	"io"
 	"os"
 
+	"github.com/baymax19/cosmos-ibc/modules/ibc/orders"
+	"github.com/baymax19/cosmos-ibc/modules/ibc/orders/recv"
+
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -29,8 +32,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	"github.com/cosmos/cosmos-sdk/x/supply"
 
-	"github.com/baymax19/cosmos-ibc/modules/bank/ibcrecv"
-	"github.com/baymax19/cosmos-ibc/modules/bank/ibcsend"
+	"github.com/baymax19/cosmos-ibc/modules/ibc/bank/ibcrecv"
+	"github.com/baymax19/cosmos-ibc/modules/ibc/bank/ibcsend"
 )
 
 const appName = "GaiaApp"
@@ -54,9 +57,10 @@ var (
 		supply.AppModuleBasic{},
 		ibc.AppModuleBasic{},
 
-
 		ibcsend.AppModuleBasic{},
 		ibcrecv.AppModuleBasic{},
+		orders.AppModuleBasic{},
+		recv.AppModuleBasic{},
 	)
 
 	maccPerms = map[string][]string{
@@ -101,8 +105,10 @@ type GaiaApp struct {
 	paramsKeeper   params.Keeper
 	ibcKeeper      ibc.Keeper
 
-	ibcSendKeeper ibcsend.Keeper
-	ibcRecvKeeper ibcrecv.Keeper
+	ibcSendKeeper    ibcsend.Keeper
+	ibcRecvKeeper    ibcrecv.Keeper
+	ordersKeeper     orders.Keeper
+	ordersRecvKeeper recv.Keeper
 
 	mm *module.Manager
 
@@ -122,7 +128,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 		bam.MainStoreKey, auth.StoreKey, staking.StoreKey,
 		supply.StoreKey, mint.StoreKey, distr.StoreKey, slashing.StoreKey,
 		gov.StoreKey, params.StoreKey, ibc.StoreKey,
-		ibcsend.ModuleName, ibcrecv.ModuleName,
+		ibcsend.ModuleName, ibcrecv.ModuleName, orders.ModuleName, recv.ModuleName,
 	)
 	tkeys := sdk.NewTransientStoreKeys(staking.TStoreKey, params.TStoreKey)
 
@@ -164,6 +170,8 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	// IBC Transfer modules
 	app.ibcSendKeeper = ibcsend.NewKeeper(app.cdc, keys[ibcsend.ModuleName], app.bankKeeper, app.ibcKeeper.Port(ibcsend.ModuleName))
 	app.ibcRecvKeeper = ibcrecv.NewKeeper(app.cdc, keys[ibcrecv.ModuleName], app.bankKeeper, app.ibcKeeper.Port(ibcrecv.ModuleName))
+	app.ordersKeeper = orders.NewKeeper(app.cdc, keys[orders.ModuleName], app.ibcKeeper.Port(orders.ModuleName), app.bankKeeper)
+	app.ordersRecvKeeper = recv.NewKeeper(app.cdc, keys[recv.ModuleName], app.ibcKeeper.Port(recv.ModuleName), app.ordersKeeper, app.bankKeeper)
 
 	// register the proposal types
 	govRouter := gov.NewRouter()
@@ -194,6 +202,8 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 
 		ibcsend.NewAppModule(app.ibcSendKeeper),
 		ibcrecv.NewAppModule(app.ibcRecvKeeper),
+		orders.NewAppModule(app.ordersKeeper, app.bankKeeper),
+		recv.NewAppModule(app.ordersRecvKeeper, app.ordersKeeper, app.bankKeeper),
 	)
 
 	app.mm.SetOrderBeginBlockers(mint.ModuleName, distr.ModuleName, slashing.ModuleName)
@@ -203,7 +213,8 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 	app.mm.SetOrderInitGenesis(
 		distr.ModuleName, staking.ModuleName, auth.ModuleName, bank.ModuleName,
 		slashing.ModuleName, gov.ModuleName, mint.ModuleName, supply.ModuleName,
-		crisis.ModuleName, genutil.ModuleName, ibcsend.ModuleName, ibcrecv.ModuleName,
+		crisis.ModuleName, genutil.ModuleName, ibcsend.ModuleName, ibcrecv.ModuleName, orders.ModuleName,
+		recv.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(&app.crisisKeeper)
@@ -227,8 +238,7 @@ func NewGaiaApp(logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest b
 
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetAnteHandler(auth.NewAnteHandler(app.accountKeeper, app.supplyKeeper, auth.DefaultSigVerificationGasConsumer))
-	app.SetAnteHandler(ibc.NewAnteHandler(app.ibcKeeper.Channel()))
+	app.SetAnteHandler(NewAntiHandler(app))
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -271,4 +281,20 @@ func (app *GaiaApp) ModuleAccountAddrs() map[string]bool {
 
 func (app *GaiaApp) Codec() *codec.Codec {
 	return app.cdc
+}
+
+func NewAntiHandler(app *GaiaApp) sdk.AnteHandler {
+	authAnteHandler := auth.NewAnteHandler(app.accountKeeper, app.supplyKeeper, auth.DefaultSigVerificationGasConsumer)
+	ibcAnteHandler := ibc.NewAnteHandler(app.ibcKeeper.Channel())
+
+	return func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, result sdk.Result, abort bool) {
+		msg := tx.GetMsgs()[0]
+
+		switch msg.(type) {
+		case ibc.MsgPacket:
+			return ibcAnteHandler(ctx, tx, false)
+		default:
+			return authAnteHandler(ctx, tx, true)
+		}
+	}
 }

@@ -2,7 +2,7 @@ package ibcrecv
 
 import (
 	"fmt"
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
@@ -12,11 +12,11 @@ import (
 type Keeper struct {
 	cdc        *codec.Codec
 	key        sdk.StoreKey
-	bankKeeper types.BankKeeper
+	bankKeeper types2.BankKeeper
 	port       ibc.Port
 }
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk types.BankKeeper, port ibc.Port) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk types2.BankKeeper, port ibc.Port) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
@@ -29,9 +29,9 @@ func (k Keeper) GetUser(ctx sdk.Context, chainID string) (string, sdk.Error) {
 	store := ctx.KVStore(k.key)
 
 	var res string
-	bz := store.Get(types.UserKey(chainID))
+	bz := store.Get(types2.UserKey(chainID))
 	if bz == nil {
-		return "", sdk.NewError("ibcsend", 1919, fmt.Sprintf("data is not existed with %s this id", chainID))
+		return "", sdk.NewError("ibcrecv", 1919, fmt.Sprintf("data is not existed with %s this id", chainID))
 	}
 
 	k.cdc.MustUnmarshalBinaryBare(bz, &res)
@@ -40,7 +40,7 @@ func (k Keeper) GetUser(ctx sdk.Context, chainID string) (string, sdk.Error) {
 
 func (k Keeper) SetUser(ctx sdk.Context, chainID, name string) {
 	store := ctx.KVStore(k.key)
-	store.Set(types.UserKey(chainID), k.cdc.MustMarshalBinaryBare(name))
+	store.Set(types2.UserKey(chainID), k.cdc.MustMarshalBinaryBare(name))
 }
 
 func (k Keeper) UpdateUser(ctx sdk.Context, chaiID, name string) sdk.Error {
@@ -48,7 +48,7 @@ func (k Keeper) UpdateUser(ctx sdk.Context, chaiID, name string) sdk.Error {
 
 	if strings.EqualFold(id, name) {
 
-		return sdk.NewError("ibcsend", 1919, fmt.Sprintf("data already exist %s", err))
+		return sdk.NewError("ibcrecv", 1919, fmt.Sprintf("data already exist %s", err))
 	}
 
 	k.SetUser(ctx, chaiID, name)

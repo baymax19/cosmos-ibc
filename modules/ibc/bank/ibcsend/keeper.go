@@ -2,7 +2,7 @@ package ibcsend
 
 import (
 	"fmt"
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	internal "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
@@ -12,11 +12,11 @@ import (
 type Keeper struct {
 	cdc        *codec.Codec
 	key        sdk.StoreKey
-	bankKeeper types.BankKeeper
+	bankKeeper internal.BankKeeper
 	port       ibc.Port
 }
 
-func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk types.BankKeeper, port ibc.Port) Keeper {
+func NewKeeper(cdc *codec.Codec, key sdk.StoreKey, bk internal.BankKeeper, port ibc.Port) Keeper {
 	return Keeper{
 		cdc:        cdc,
 		key:        key,
@@ -29,7 +29,7 @@ func (k Keeper) GetUser(ctx sdk.Context, chainID string) (string, sdk.Error) {
 	store := ctx.KVStore(k.key)
 
 	var res string
-	bz := store.Get(types.UserKey(chainID))
+	bz := store.Get(internal.UserKey(chainID))
 	if bz == nil {
 		return "", sdk.NewError("ibcsend", 1919, fmt.Sprintf("data is not existed with %s this id", chainID))
 	}
@@ -40,7 +40,7 @@ func (k Keeper) GetUser(ctx sdk.Context, chainID string) (string, sdk.Error) {
 
 func (k Keeper) SetUser(ctx sdk.Context, chanID, name string) {
 	store := ctx.KVStore(k.key)
-	store.Set(types.UserKey(chanID), k.cdc.MustMarshalBinaryBare(name))
+	store.Set(internal.UserKey(chanID), k.cdc.MustMarshalBinaryBare(name))
 }
 
 func (k Keeper) UpdateUser(ctx sdk.Context, chanID, name string) sdk.Error {
@@ -50,7 +50,7 @@ func (k Keeper) UpdateUser(ctx sdk.Context, chanID, name string) sdk.Error {
 	}
 
 	k.SetUser(ctx, chanID, name)
-	packet := types.PacketMsgUser{Name: name}
+	packet := internal.PacketMsgUser{Name: name}
 
 	return k.port.Send(ctx, chanID, packet)
 }
@@ -61,7 +61,7 @@ func (k Keeper) TransferTokens(ctx sdk.Context, from, to sdk.AccAddress, amount 
 		return err
 	}
 
-	packet := types.PacketTokenTransfer{
+	packet := internal.PacketTokenTransfer{
 		Sender:   from,
 		Receiver: to,
 		Amount:   amount,

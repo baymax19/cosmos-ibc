@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
 )
@@ -16,9 +15,7 @@ type PacketMsgUser struct {
 }
 
 func (p PacketMsgUser) Marshal() []byte {
-	cdc := codec.New()
-	RegisterCodec(cdc)
-	return cdc.MustMarshalBinaryBare(p)
+	return ModuleCdc.MustMarshalBinaryBare(p)
 }
 
 func (p PacketMsgUser) SenderPort() string {
@@ -30,7 +27,7 @@ func (p PacketMsgUser) ReceiverPort() string {
 }
 
 func (p PacketMsgUser) Type() string {
-	return "user"
+	return "packet-user"
 }
 
 func (p PacketMsgUser) ValidateBasic() sdk.Error {
@@ -77,9 +74,7 @@ func (p PacketTokenTransfer) Timeout() uint64 {
 }
 
 func (p PacketTokenTransfer) Marshal() []byte {
-	cdc := codec.New()
-	RegisterCodec(cdc)
-	return cdc.MustMarshalBinaryBare(p)
+	return ModuleCdc.MustMarshalBinaryBare(p)
 }
 
 func (p PacketTokenTransfer) MarshalJSON() ([]byte, error) {
@@ -94,10 +89,5 @@ func (p PacketTokenTransfer) MarshalJSON() ([]byte, error) {
 		Amount:   p.Amount,
 	}
 
-	bz, err := json.Marshal(a)
-	if err != nil {
-		return nil, err
-	}
-
-	return bz, nil
+	return json.Marshal(a)
 }

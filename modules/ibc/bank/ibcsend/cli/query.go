@@ -2,7 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
@@ -10,8 +10,8 @@ import (
 
 func GetQueryCmd(queryRoute string, cdc *codec.Codec) *cobra.Command {
 	queryCmd := &cobra.Command{
-		Use:   "ibcrecv",
-		Short: "Quering Commands for ibcrecv module",
+		Use:   "ibcsend",
+		Short: "Quering Commands for ibcsend module",
 	}
 
 	queryCmd.AddCommand(
@@ -28,7 +28,7 @@ func GetCmdQueryName(storeName string, cdc *codec.Codec) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.NewCLIContext().WithCodec(cdc)
 
-			val, _, err := ctx.QueryStore(types.UserKey(args[0]), storeName)
+			val, _, err := ctx.QueryStore(types2.UserKey(args[0]), storeName)
 			if err != nil {
 				return err
 			}

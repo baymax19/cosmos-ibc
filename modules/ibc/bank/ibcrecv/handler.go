@@ -1,7 +1,7 @@
 package ibcrecv
 
 import (
-	"github.com/baymax19/cosmos-ibc/modules/bank/types"
+	types2 "github.com/baymax19/cosmos-ibc/modules/ibc/bank/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/ibc"
 )
@@ -11,9 +11,9 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case ibc.MsgPacket:
 			switch packet := msg.Packet.(type) {
-			case types.PacketMsgUser:
+			case types2.PacketMsgUser:
 				return handleMyPacket(ctx, k, packet, msg.ChannelID)
-			case types.PacketTokenTransfer:
+			case types2.PacketTokenTransfer:
 				return handleTokenTransfer(ctx, k, packet, msg.ChannelID)
 
 			default:
@@ -25,7 +25,7 @@ func NewHandler(k Keeper) sdk.Handler {
 	}
 }
 
-func handleMyPacket(ctx sdk.Context, k Keeper, packet types.PacketMsgUser, chainID string) sdk.Result {
+func handleMyPacket(ctx sdk.Context, k Keeper, packet types2.PacketMsgUser, chainID string) sdk.Result {
 	err := k.UpdateUser(ctx, chainID, packet.Name)
 	if err != nil {
 		return err.Result()
@@ -34,7 +34,7 @@ func handleMyPacket(ctx sdk.Context, k Keeper, packet types.PacketMsgUser, chain
 	return sdk.Result{}
 }
 
-func handleTokenTransfer(ctx sdk.Context, k Keeper, packet types.PacketTokenTransfer, chanID string) sdk.Result {
+func handleTokenTransfer(ctx sdk.Context, k Keeper, packet types2.PacketTokenTransfer, chanID string) sdk.Result {
 	err := k.ReceiveTokens(ctx, packet.Receiver, packet.Amount)
 	if err != nil {
 		return err.Result()
